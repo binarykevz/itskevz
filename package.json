@@ -1,0 +1,22 @@
+{
+  "name": "kevin-mtproto-gemini",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun --hot src/index.ts",
+    "start": "bun src/index.ts",
+    "login": "bun scripts/login.ts",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@libsql/client": "^0.15.0",
+    "input": "^1.0.1",
+    "pino": "^9.5.0",
+    "telegram": "^2.26.22",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.7.2"
+  }
+}
