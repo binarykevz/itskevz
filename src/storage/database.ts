@@ -3,6 +3,9 @@ import { env } from "../config/env";
 
 export const db: Client = createClient({
   url: env.DATABASE_URL,
+  authToken: env.DATABASE_URL.startsWith("libsql://")
+    ? env.TURSO_AUTH_TOKEN
+    : undefined,
 });
 
 export async function run(sql: string, args: unknown[] = []) {
@@ -24,6 +27,7 @@ const schema = [
     last_seen_at TEXT NOT NULL DEFAULT (datetime('now'))
   )
   `,
+
   `
   CREATE TABLE IF NOT EXISTS vip_profiles (
     user_id TEXT PRIMARY KEY REFERENCES users(id),
@@ -37,9 +41,11 @@ const schema = [
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
   )
   `,
+
   `
   CREATE TABLE IF NOT EXISTS conversations (
-    id TEXT PRIMARY KEY,
+    seq INTEGER PRIMARY KEY AUTOINCREMENT,
+    id TEXT UNIQUE NOT NULL,
     user_id TEXT NOT NULL,
     role TEXT NOT NULL CHECK (role IN ('user', 'assistant')),
     content TEXT,
@@ -48,10 +54,12 @@ const schema = [
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   )
   `,
+
   `
-  CREATE INDEX IF NOT EXISTS idx_conversations_user_created
-  ON conversations (user_id, created_at DESC, rowid DESC)
+  CREATE INDEX IF NOT EXISTS idx_conversations_user_seq
+  ON conversations (user_id, seq DESC)
   `,
+
   `
   CREATE TABLE IF NOT EXISTS memories (
     id TEXT PRIMARY KEY,
@@ -63,10 +71,12 @@ const schema = [
     last_used_at TEXT
   )
   `,
+
   `
   CREATE INDEX IF NOT EXISTS idx_memories_user_importance
   ON memories (user_id, importance DESC)
   `,
+
   `
   CREATE TABLE IF NOT EXISTS personality_profiles (
     user_id TEXT PRIMARY KEY,
@@ -81,6 +91,7 @@ const schema = [
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
   )
   `,
+
   `
   CREATE TABLE IF NOT EXISTS moods (
     user_id TEXT PRIMARY KEY,
@@ -90,6 +101,7 @@ const schema = [
     detected_at TEXT NOT NULL DEFAULT (datetime('now'))
   )
   `,
+
   `
   CREATE TABLE IF NOT EXISTS telegram_files (
     id TEXT PRIMARY KEY,
@@ -107,10 +119,12 @@ const schema = [
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   )
   `,
+
   `
   CREATE INDEX IF NOT EXISTS idx_telegram_files_owner_created
   ON telegram_files (owner_user_id, created_at DESC)
   `,
+
   `
   CREATE TABLE IF NOT EXISTS settings (
     key TEXT PRIMARY KEY,
