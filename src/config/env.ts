@@ -12,6 +12,7 @@ const envSchema = z.object({
   GEMINI_ANALYSIS_MODEL: z.string().optional(),
 
   DATABASE_URL: z.string().default("file:./data/kevin.db"),
+  TURSO_AUTH_TOKEN: z.string().optional(),
 
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug"]).default("info"),
 
@@ -36,6 +37,11 @@ if (!parsed.success) {
 }
 
 export const env = parsed.data;
+
+if (env.DATABASE_URL.startsWith("libsql://") && !env.TURSO_AUTH_TOKEN) {
+  console.error("TURSO_AUTH_TOKEN is required when DATABASE_URL uses libsql://");
+  process.exit(1);
+}
 
 export const vipBootstrapIds = (env.VIP_USER_IDS ?? "")
   .split(",")
