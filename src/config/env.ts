@@ -5,7 +5,9 @@ import path from "node:path";
 const envSchema = z.object({
   TELEGRAM_API_ID: z.coerce.number().int().positive(),
   TELEGRAM_API_HASH: z.string().min(8),
+
   TELEGRAM_SESSION: z.string().default(""),
+  TELEGRAM_BOT_TOKEN: z.string().optional(),
 
   GEMINI_API_KEY: z.string().optional(),
   GEMINI_MODEL: z.string().default("gemini-2.0-flash"),
@@ -37,6 +39,12 @@ if (!parsed.success) {
 }
 
 export const env = parsed.data;
+
+if (!env.TELEGRAM_BOT_TOKEN && !env.TELEGRAM_SESSION) {
+  console.error("Missing Telegram credentials.");
+  console.error("Set TELEGRAM_BOT_TOKEN for bot mode, or TELEGRAM_SESSION for user-account mode.");
+  process.exit(1);
+}
 
 if (env.DATABASE_URL.startsWith("libsql://") && !env.TURSO_AUTH_TOKEN) {
   console.error("TURSO_AUTH_TOKEN is required when DATABASE_URL uses libsql://");
