@@ -1,13 +1,43 @@
-import { TelegramClient } from "telegram";
-import { StringSession } from "telegram/sessions";
+import { TelegramClient, StringSession, Api } from "./gramjs";
 import { env } from "../config/env";
+import { logger } from "../utils/logger";
 
-let client: TelegramClient | null = null;
+let client: any = null;
 
-export async function initTelegram(): Promise<TelegramClient> {
+export async function initTelegram(): Promise<any> {
+  if (env.TELEGRAM_BOT_TOKEN) {
+    logger.info("Starting Kevin in MTProto bot mode");
+
+    client = new TelegramClient(
+      new StringSession(""),
+      env.TELEGRAM_API_ID,
+      env.TELEGRAM_API_HASH,
+      {
+        connectionRetries: 5,
+        deviceModel: "Kevin Companion Bot",
+        systemVersion: "Bun",
+        appVersion: "1.0.0",
+      }
+    );
+
+    await client.start({
+      botAuthToken: env.TELEGRAM_BOT_TOKEN,
+    });
+
+    try {
+      await client.invoke(new Api.updates.GetState());
+    } catch {
+      // Best-effort update state initialization.
+    }
+
+    return client;
+  }
+
+  logger.info("Starting Kevin in MTProto user-account mode");
+
   if (!env.TELEGRAM_SESSION) {
     throw new Error(
-      "TELEGRAM_SESSION is empty. Run `bun run login` to generate a session string."
+      "TELEGRAM_SESSION is empty. Use TELEGRAM_BOT_TOKEN for bot mode, or generate a session for user mode."
     );
   }
 
@@ -28,10 +58,16 @@ export async function initTelegram(): Promise<TelegramClient> {
     throw new Error("Telegram session is not authorized. Generate a new session.");
   }
 
+  try {
+    await client.invoke(new Api.updates.GetState());
+  } catch {
+    // Best-effort update state initialization.
+  }
+
   return client;
 }
 
-export function getTelegramClient(): TelegramClient {
+export function getTelegramClient(): any {
   if (!client) {
     throw new Error("Telegram client has not been initialized");
   }
