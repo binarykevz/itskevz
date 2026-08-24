@@ -1,4 +1,4 @@
-import { events } from "telegram";
+import { NewMessage } from "telegram/events";
 import { logger } from "../utils/logger";
 import { handleIncomingMessage } from "../pipeline/handler";
 
@@ -15,8 +15,8 @@ export function registerTelegramEvents(client: any): void {
         logger.error({ err: error }, "Failed to process Telegram update");
       }
     },
-    new events.NewMessage({
+    new NewMessage({
       incoming: true,
-    })
+    } as any)
   );
 }
